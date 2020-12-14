@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vargi-Bots Dashboard</title>
+    <style>
+        th, td, p, input {
+            font:12px Verdana;
+        }
+        table {
+            width:100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background-color: #eee;
+        }
+        tr:nth-child(odd) {
+            background-color: #fff;
+        }
+        th {
+            background-color:	#808080;
+            color: white;
+        }
+    </style>
+   <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+      integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+      crossorigin=""
+    />
+
+    <script
+      src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+      integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+      crossorigin=""
+    ></script>
+</head>
+
+<body>
+    <!-- header images -->
+    <header>
+    <div id="eyantraLogo">
+        <!-- eyantra logo -->
+        <img src="./assets/e-yantra_logo.png" alt="e_yantra_logo" width="250" height="50"/>
+    </div>
+    </header>
+
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
+
+    <div id="map" style="height: 380px"></div>
+
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
+
+    <p id="showData"></p>
+
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<script>
+
+
+    var jsonDataObject =[];
+    var map = L.map('map').setView([20.5937, 78.9629], 5);
+    window.onload = fetchData('https://spreadsheets.google.com/feeds/list/1eIqCvbWFyvxfpQeC8qavUFgKNElymR21GWlQb7rVRQk/1/public/values?alt=json');
+
+    async function fetchData(url){
+    const data = await fetch(url);
+    const dataJson = await data.json();
+
+    var ele = document.getElementById('menu');
+        for (var i = 0; i < dataJson.feed.entry.length; ++i) {
+            var myData_map, myData_order;
+
+            var json_data = {
+                    "City": dataJson.feed.entry[i].gsx$city.$t,
+                    "Picking" : dataJson.feed.entry[i].gsx$pick.$t,
+                    "Shipping" : dataJson.feed.entry[i].gsx$ship.$t,
+                    "Latitude": parseFloat(dataJson.feed.entry[i].gsx$latitude.$t),
+                    "Longitude": parseFloat(dataJson.feed.entry[i].gsx$longitude.$t)
+                };
+            jsonDataObject.push(json_data);
+            //console.log(json_data);
+            //console.log(jsonDataObject);
+            //////////////////////////////////////////Mapping////////////////////////////////////////////////////////////////////////////////////
+            for (var j = 0; j < jsonDataObject.length; j++) {
+                    var marker = L.marker(L.latLng(parseFloat(jsonDataObject[j].Latitude), parseFloat(jsonDataObject[j].Longitude)));
+                        marker.bindPopup(jsonDataObject[j].City, {
+                            autoClose: false
+                    });
+                    map.addLayer(marker);
+                    marker.on('click', onClick_Marker)
+                    // Attach the corresponding JSON data to your marker:
+                    marker.myJsonData =jsonDataObject[j];
+            }
+
+            function onClick_Marker(e) {
+                var marker = e.target;
+                popup = L.popup()
+                .setLatLng(marker.getLatLng())
+                .setContent("Picking: " + marker.myJsonData.Picking + " || Shipping: " +   marker.myJsonData.Shipping)
+                .openOn(map);
+            }
+
+
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);      
+            //////////////////////////////////////////Mapping////////////////////////////////////////////////////////////////////////////////////
+
+            //////////////////////////////////////////Table////////////////////////////////////////////////////////////////////////////////////
+            var col = [];
+            for (var j = 0; j < jsonDataObject.length; j++) {
+                for (var key in jsonDataObject[j]) {
+                    if (col.indexOf(key) === -1) {
+                        col.push(key);
+                    }
+                }
+            }
+
+            // CREATE DYNAMIC TABLE.
+            var table = document.createElement("table");
+            // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+
+            var tr = table.insertRow(-1);                   // TABLE ROW.
+
+            for (var k = 0; k < col.length-2; k++) {
+                var th = document.createElement("th");      // TABLE HEADER.
+                th.innerHTML = col[k];
+                tr.appendChild(th);
+            }
+
+            // ADD JSON DATA TO THE TABLE AS ROWS.
+            for (var l = 0; l <jsonDataObject.length; l++) {
+
+                tr = table.insertRow(-1);
+
+                for (var m = 0; m < col.length-2; m++) {
+                    var tabCell = tr.insertCell(-1);
+                    tabCell.innerHTML =jsonDataObject[l][col[m]];
+                }
+            }
+
+            // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+            var divContainer = document.getElementById("showData");
+            divContainer.innerHTML = "";
+            divContainer.appendChild(table);
+            //////////////////////////////////////////Table////////////////////////////////////////////////////////////////////////////////////
+        }
+    }
+console.log(jsonDataObject);
+////////////////////////Reload div using AJAX Requests///////////////////////////////////////
+        $(document).ready(function(){
+        setInterval(function(){
+              $("#map").load(window.location.href + " #map" );
+              $("#showdata").load(window.location.href + " #showdata" );
+        }, 3000);
+        });
+////////////////////////Reload div using AJAX Requests///////////////////////////////////////
+
+</script>
+</body>
+</html>

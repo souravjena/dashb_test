@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>JSON Auto Update Test</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+</head>
+
+
+<script>
+	$(document).ready(function() {
+	    // Fetch the initial table
+	    refreshTable();
+
+	    // Fetch every 1 second
+	    setInterval(refreshTable, 1000);
+	});
+
+	function refreshTable(){
+	    
+		// var trHTML = '';	    
+	    
+	    $.getJSON('https://spreadsheets.google.com/feeds/list/1eIqCvbWFyvxfpQeC8qavUFgKNElymR21GWlQb7rVRQk/1/public/values?alt=json', function(data) {
+	    	
+		    	var trHTML = '';
+
+		    	for (var i = 0; i < data.feed.entry.length; ++i) {
+	            	var myData_map, myData_order;
+
+	            	var str_city_name = data.feed.entry[i].gsx$city.$t
+	            	var flag_picking = data.feed.entry[i].gsx$pick.$t
+	            	var flag_shipping = data.feed.entry[i].gsx$ship.$t
+	            	var float_latitude = parseFloat(data.feed.entry[i].gsx$latitude.$t)
+	            	var fload_longitude = parseFloat(data.feed.entry[i].gsx$longitude.$t)
+
+		            trHTML += '<tr><td>' + data.feed.entry[i].gsx$city.$t + '</td><td>' + data.feed.entry[i].gsx$pick.$t + '</td><td>' + data.feed.entry[i].gsx$ship.$t + '</td></tr>';
+
+		            var json_data = {
+		                    "City": data.feed.entry[i].gsx$city.$t,
+		                    "Picking" : data.feed.entry[i].gsx$pick.$t,
+		                    "Shipping" : data.feed.entry[i].gsx$ship.$t,
+		                    "Latitude": parseFloat(data.feed.entry[i].gsx$latitude.$t),
+		                    "Longitude": parseFloat(data.feed.entry[i].gsx$longitude.$t)
+		             		};
+
+	            }
+
+	            console.log(trHTML);
+	    		$('#tableContent').html(trHTML);
+	    		var trHTML = '';
+
+	    	});
+
+		
+		var mymap = L.map('mapid').setView([23, 83], 5);
+
+		L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+				'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+			id: 'mapbox/streets-v11',
+			tileSize: 512,
+			zoomOffset: -1
+
+		}).addTo(mymap);
+
+// 		var Stadia_AlidadeSmoothDark = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+// 	maxZoom: 20,
+// 	attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+// }).addTo(mymap);
+
+
+// var myTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+// 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+// 	subdomains: 'abcd',
+// 	maxZoom: 19
+// }).addTo(mymap);
+
+// var myTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+// 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+// 	subdomains: 'abcd',
+// 	maxZoom: 19
+// }).addTo(mymap);
+
+
+
+// var myTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+// 	subdomains: 'abcd',
+// 	maxZoom: 19
+// }).addTo(mymap);
+
+var redIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+var yellowIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+var greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+
+		L.marker([23, 83], {icon: redIcon}).addTo(mymap).bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
+		L.marker([24, 84], {icon: yellowIcon}).addTo(mymap).bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
+		L.marker([25, 85], {icon: greenIcon}).addTo(mymap).bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
+
+
+		var popup = L.popup();
+
+		function onMapClick(e) {
+			popup
+				.setLatLng(e.latlng)
+				.setContent("You clicked the map at " + e.latlng.toString())
+				.openOn(mymap);
+		}
+
+		mymap.on('click', onMapClick);	    
+	}
+</script>
+
+
+<body>
+
+<!-- 	<div id="mapid" style="width: 700px; height: 1000px;"></div>
+
+	<table id="location" border='1'>
+	    <tr>
+	    	<th>City</th>
+	    	<th>Picking</th>
+	    	<th>Shipping</th>
+	    </tr>
+	    <tbody id="tableContent">
+
+		</tbody>
+	</table> -->
+
+	<div id="header" style="height:15%;width:100%;">
+
+    <div id="mapid" style="float:left; width: 700px; height: 1000px;"></div>
+    <div style='float:left'>
+        <table id="location" border='1' width="44" style="margin-left:30%;float:top;">
+	    <tr>
+	    	<th>City</th>
+	    	<th>Picking</th>
+	    	<th>Shipping</th>
+	    </tr>
+	    <tbody id="tableContent">
+
+		</tbody>
+	</table>
+    </div>
+</div>
+
+
+</body>
+
+
+</html>

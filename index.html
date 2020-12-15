@@ -1,8 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>JSON Auto Update Test</title>
+	<title>VB#0000 Warehouse Dashboard</title>
+    <style>
+        th, td, p, input {
+            font:12px Verdana;
+        }
+        table {
+            width:100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background-color: #eee;
+        }
+        tr:nth-child(odd) {
+            background-color: #fff;
+        }
+        th {
+            background-color:	#808080;
+            color: white;
+        }
+    </style>
+   <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+      integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+      crossorigin=""
+    />
+
+    <script
+      src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+      integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+      crossorigin=""
+    ></script>
 </head>
+
+<!-- header images -->
+<header>
+	<div id="eyantraLogo">
+		<!-- eyantra logo -->
+		<img src="./assets/e-yantra_logo.png" alt="e_yantra_logo" width="250" height="50"><br>
+	</div>
+</header>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
@@ -10,10 +56,18 @@
 	$(document).ready(function() {
 	    // Fetch the initial table
 	    refreshTable();
-
+	
 	    // Fetch every 1 second
-	    setInterval(refreshTable, 1000);
+	    setInterval(refreshTable, 3000);
 	});
+	$(document).ready(function() {
+	    // Fetch the initial table
+	    refreshMap();
+	
+	    // Fetch every 1 second
+	    setInterval(refreshMap, 3000);
+	});
+	
 
 	function refreshTable(){
 	    
@@ -45,23 +99,76 @@
 
 	    
 	}
+	
+	function refreshMap(){
+		var container = L.DomUtil.get('map');
+      	if(container != null){
+        container._leaflet_id = null;
+      	}
+		var map = L.map('map').setView([20.5937, 78.9629], 4);
+		var jsonDataObject =[];
+		$.getJSON('https://spreadsheets.google.com/feeds/list/1eIqCvbWFyvxfpQeC8qavUFgKNElymR21GWlQb7rVRQk/1/public/values?alt=json', function(data) {
+		for (var i = 0; i < data.feed.entry.length; ++i) {
+	        var myData_map, myData_order;
+			var json_data = {
+		                    "City": data.feed.entry[i].gsx$city.$t,
+		                    "Picking" : data.feed.entry[i].gsx$pick.$t,
+		                    "Shipping" : data.feed.entry[i].gsx$ship.$t,
+		                    "Latitude": parseFloat(data.feed.entry[i].gsx$latitude.$t),
+		                    "Longitude": parseFloat(data.feed.entry[i].gsx$longitude.$t)
+		             		};
+			jsonDataObject.push(json_data);
+		console.log(jsonDataObject);
+		for (var j = 0; j < jsonDataObject.length; j++) {
+                    var marker = L.marker(L.latLng(parseFloat(jsonDataObject[j].Latitude), parseFloat(jsonDataObject[j].Longitude)));
+                        marker.bindPopup(jsonDataObject[j].City, {
+                            autoClose: false
+                    });
+                    map.addLayer(marker);
+                    marker.on('click', onClick_Marker)
+                    // Attach the corresponding JSON data to your marker:
+                    marker.myJsonData =jsonDataObject[j];
+            }
+
+        function onClick_Marker(e) {
+                var marker = e.target;
+                popup = L.popup()
+                .setLatLng(marker.getLatLng())
+                .setContent("Picking: " + marker.myJsonData.Picking + " || Shipping: " +   marker.myJsonData.Shipping)
+                .openOn(map);
+        }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);   
+		}
+		});
+
+	}
+	
+
 </script>
 
 <body>
 
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
 
-<table id="location" border='1'>
-    <tr>
-    	<th>City</th>
-    	<th>Picking</th>
-    	<th>Shipping</th>
-    </tr>
-    <tbody id="tableContent">
+    <div id="map" style="height: 380px"></div>
 
-	</tbody>
-</table>
+    <hr style="height:4px;border-width:0;color:gray;background-color:gray">
 
+	<table id="table1" border='1'>
+		<tr>
+			<th>City</th>
+			<th>Picking</th>
+			<th>Shipping</th>
+		</tr>
+		<tbody id="tableContent">
 
+		</tbody>
+	</table>
+
+	<hr style="height:4px;border-width:0;color:gray;background-color:gray">
 
 </body>
 
